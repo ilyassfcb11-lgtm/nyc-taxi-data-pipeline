@@ -1,0 +1,46 @@
+version: 2
+
+# sources.yml tells dbt where the raw data lives in BigQuery.
+# Instead of hardcoding `nyc-taxi-intelligence.raw.raw_taxi_trips`
+# everywhere, we define it once here and reference it with
+# {{ source('raw', 'raw_taxi_trips') }} in our models.
+# This means if the raw dataset ever moves or is renamed,
+# we update one file instead of every model.
+
+sources:
+  - name: raw
+    database: nyc-taxi-intelligence
+    schema: raw
+    description: "Raw NYC TLC Yellow Taxi data — loaded by ingestion/ingest.py. Never modified after load."
+
+    tables:
+      - name: raw_taxi_trips
+        description: >
+          Raw Yellow Taxi trip records from the NYC Taxi & Limousine Commission.
+          48,722,602 rows covering January–December 2025.
+          Partitioned by pickup_date for cost-efficient querying.
+        columns:
+          - name: tpep_pickup_datetime
+            description: "Trip pickup timestamp — raw from TLC"
+          - name: tpep_dropoff_datetime
+            description: "Trip dropoff timestamp — raw from TLC"
+          - name: fare_amount
+            description: "Metered fare amount in USD — may include negatives and outliers (cleaned in staging)"
+          - name: trip_distance
+            description: "Trip distance in miles — may include zeros and GPS errors (cleaned in staging)"
+          - name: cbd_congestion_fee
+            description: "NYC Central Business District congestion fee — new column unique to 2025 data"
+
+      - name: raw_zone_lookup
+        description: >
+          NYC taxi zone lookup table. 265 rows — one per zone.
+          Maps LocationID integers to zone names and boroughs.
+        columns:
+          - name: LocationID
+            description: "Integer zone ID (1–265) — matches PULocationID and DOLocationID in trip records"
+          - name: Borough
+            description: "NYC borough: Manhattan, Queens, Brooklyn, Bronx, Staten Island, EWR"
+          - name: Zone
+            description: "Zone name (e.g. 'Upper East Side South', 'JFK Airport')"
+          - name: service_zone
+            description: "Service zone category: Yellow Zone, Boro Zone, Airports, EWR"

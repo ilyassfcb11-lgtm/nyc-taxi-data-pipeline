@@ -1,0 +1,98 @@
+# ============================================================
+# .gitignore — NYC Taxi Operations Intelligence Platform
+# ============================================================
+# What is .gitignore?
+#   Git tracks every file in your project folder. But some
+#   files should NEVER be uploaded to GitHub — credentials,
+#   temporary files, large data files, local config. This file
+#   tells Git: ignore these files, never track them, never
+#   upload them. If a file is listed here, it is invisible
+#   to Git even if it sits in your project folder.
+# ============================================================
+
+
+# --- CREDENTIALS (CRITICAL — never commit these) ---
+*.json
+# Service account key files from Google Cloud are JSON.
+# If this file ever gets pushed to GitHub, anyone on the
+# internet can access your BigQuery project and run queries
+# at your expense. This line prevents that entirely.
+
+.env
+# Your .env file stores the path to your credentials and
+# your GCP project ID. Never commit it.
+
+credentials/
+# A folder where credentials files might be stored locally.
+
+
+# --- Python Environment ---
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+# What these are: when you create a virtual environment
+# (venv), Python creates a folder with hundreds of library
+# files. These are all auto-generated and can be recreated
+# with `pip install -r requirements.txt`. There is no reason
+# to store them in Git — they make the repo huge and slow.
+
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/
+# Jupyter creates checkpoint files every time you save a
+# notebook. They are backups for Jupyter's own use and
+# should not be in Git.
+
+
+# --- Data Files (too large for Git) ---
+*.parquet
+*.csv
+data/
+raw_data/
+# Parquet files can be hundreds of megabytes each. GitHub
+# has a 100MB file size limit and a 1GB repo soft limit.
+# We never store raw data in Git. Data lives in BigQuery.
+# The ingestion script downloads it fresh when needed.
+
+
+# --- macOS system files ---
+.DS_Store
+.AppleDouble
+.LSOverride
+# macOS creates hidden .DS_Store files in every folder to
+# store folder view settings. These are personal to your
+# machine and meaningless to anyone else. Always ignore them.
+
+
+# --- dbt ---
+nyc_taxi_dbt/target/
+nyc_taxi_dbt/dbt_packages/
+nyc_taxi_dbt/logs/
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+# dbt generates compiled SQL and logs in these folders when
+# it runs. They are outputs, not source code. Ignore them.
+# The actual model source files (models/*.sql) ARE committed.
+
+# --- Exported data ---
+tableau_data/
+
+# --- Log files ---
+logs/
+*.log
+
+
+# --- IDE and editor files ---
+.vscode/
+.idea/
+*.swp
+*.swo
+# Personal editor settings. What you see in VS Code is your
+# own configuration — it should not override someone else's.

@@ -1,0 +1,113 @@
+# ============================================================
+# NYC Taxi Operations Intelligence Platform
+# Python Dependencies
+# ============================================================
+# Install everything at once:
+#   pip install -r requirements.txt
+#
+# What is requirements.txt?
+#   A plain text file that lists every Python package this
+#   project needs. When you (or anyone else) clones the repo
+#   and runs the install command above, Python downloads and
+#   installs the exact packages needed. This makes the project
+#   reproducible on any machine.
+# ============================================================
+
+
+# --- HTTP / File Download ---
+requests==2.31.0
+# What it does: downloads files from the internet via HTTP.
+# We use it to download the monthly Parquet files from the
+# NYC TLC website. It handles redirects, timeouts, and errors
+# so we don't have to write that logic ourselves.
+
+
+# --- Data Reading and Manipulation ---
+pandas==2.2.3
+# What it does: the most widely used Python library for working
+# with tabular data. Think of it as a programmable spreadsheet.
+# We use it to read Parquet files, inspect schemas, filter bad
+# rows, and prepare data before loading to BigQuery.
+
+pyarrow==18.1.0
+# What it does: reads and writes Apache Parquet files.
+# Parquet is the file format the TLC uses. pyarrow is the
+# engine that pandas uses under the hood to read Parquet.
+# Without it, pandas cannot open .parquet files.
+
+
+# --- Google Cloud / BigQuery ---
+google-cloud-bigquery==3.27.0
+# What it does: the official Python client for Google BigQuery.
+# It lets us create tables, load data, and run SQL queries
+# from Python code. This is how our ingestion script talks
+# to BigQuery without using the browser interface.
+
+google-cloud-bigquery-storage==2.27.0
+# What it does: a faster way to download data FROM BigQuery
+# into Python (using the Storage Read API instead of the
+# slower Jobs API). Needed by some versions of pandas-gbq
+# and BigQuery client for fast reads.
+
+pandas-gbq==0.23.1
+# What it does: a convenience wrapper that makes it easy to
+# read BigQuery query results directly into a pandas DataFrame.
+# Used primarily during EDA (exploratory data analysis) when
+# we want to run a SQL query and immediately work with the
+# results in Python.
+
+google-auth==2.40.3
+# What it does: handles authentication with Google Cloud.
+# When our Python script connects to BigQuery, it needs to
+# prove it has permission. google-auth reads our service
+# account credentials file and handles the authentication
+# handshake automatically.
+
+db-dtypes==1.4.3
+# What it does: adds BigQuery-specific data types (like
+# BigQuery DATE, TIME, NUMERIC) to pandas. Without it,
+# some BigQuery columns cannot be properly converted to
+# pandas DataFrames.
+
+
+# --- Environment Variables ---
+python-dotenv==1.0.0
+# What it does: reads a .env file and loads its contents
+# as environment variables in Python. We store sensitive
+# information (like the path to our credentials file, the
+# GCP project ID) in a .env file instead of hardcoding them
+# in scripts. This keeps secrets out of GitHub.
+
+
+# --- Notebooks and Visualization (EDA only) ---
+jupyter==1.0.0
+# What it does: runs Jupyter notebooks — interactive Python
+# documents where you can run code one cell at a time and
+# see results inline. Used ONLY for EDA (exploratory data
+# analysis). Production ingestion code is plain .py scripts,
+# not notebooks.
+
+ipykernel==6.29.5
+# What it does: the Python kernel that Jupyter notebooks run
+# on. Required for notebooks to execute code.
+
+matplotlib==3.9.2
+# What it does: the foundational Python charting library.
+# Draws line charts, bar charts, histograms, scatter plots.
+# Used in EDA to visualize distributions and trends.
+
+seaborn==0.13.2
+# What it does: built on top of matplotlib, makes statistical
+# charts much easier and better-looking. One line produces
+# a heatmap that would take 20 lines in raw matplotlib.
+# Used in EDA for heatmaps, distribution plots, and
+# correlation analysis.
+
+
+# --- Utilities ---
+tqdm==4.66.1
+# What it does: adds a progress bar to long-running loops.
+# When downloading 12 monthly files (which can take several
+# minutes), tqdm shows "Downloading: 3/12 files [=====>  ]"
+# instead of a blank screen. Small quality-of-life tool that
+# makes scripts feel professional.

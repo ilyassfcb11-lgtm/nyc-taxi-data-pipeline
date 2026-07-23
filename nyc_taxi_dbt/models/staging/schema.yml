@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: stg_zones
+    description: "Cleaned NYC taxi zone lookup. 265 zones with consistent column naming."
+    columns:
+      - name: location_id
+        description: "Unique zone ID (1–265)"
+        data_tests:
+          - not_null
+          - unique
+      - name: borough
+        description: "NYC borough name"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island', 'EWR', 'Unknown']
+      - name: zone_name
+        description: "Zone name (e.g. Upper East Side South, JFK Airport)"
+        data_tests:
+          - not_null
+      - name: service_zone
+        description: "TLC service zone category"
+
+  - name: stg_trips
+    description: >
+      Cleaned NYC Yellow Taxi trip records for 2025. ~44M rows after applying
+      6 cleaning rules (removed fares <= 0, distance <= 0, wrong year,
+      zero-duration, fare > $500, distance > 100 miles).
+    columns:
+      - name: pickup_datetime
+        description: "Trip start timestamp"
+        data_tests:
+          - not_null
+      - name: dropoff_datetime
+        description: "Trip end timestamp"
+        data_tests:
+          - not_null
+      - name: pickup_date
+        description: "Trip date (used as partition key)"
+        data_tests:
+          - not_null
+      - name: pickup_location_id
+        description: "Pickup zone ID — joins to dim_zone.location_id"
+        data_tests:
+          - not_null
+      - name: fare_amount
+        description: "Metered fare in USD. Always > 0 after cleaning."
+        data_tests:
+          - not_null
+      - name: total_amount
+        description: "Total charged amount including all fees and tip"
+        data_tests:
+          - not_null
+      - name: trip_distance_miles
+        description: "Trip distance in miles. Always > 0 after cleaning."
+        data_tests:
+          - not_null
+      - name: is_airport_pickup
+        description: "TRUE if pickup zone is JFK (132) or LaGuardia (138)"
+      - name: is_credit_card
+        description: "TRUE if payment_type = 1 (credit card)"
+      - name: is_weekend
+        description: "TRUE if pickup day is Saturday or Sunday"
+      - name: cbd_congestion_fee
+        description: "NYC CBD congestion pricing fee — new in January 2025. NULL for trips outside the zone."

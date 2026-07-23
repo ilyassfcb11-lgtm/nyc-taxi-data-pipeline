@@ -1,0 +1,103 @@
+version: 2
+
+models:
+  - name: mart_hourly_demand
+    description: >
+      Demand KPIs aggregated by hour, day of week, month, and zone.
+      ~417K rows. Primary source for the demand heatmap and hourly trend charts.
+    columns:
+      - name: pickup_hour
+        description: "Hour of day (0–23)"
+        data_tests:
+          - not_null
+      - name: total_trips
+        description: "Number of trips in this hour/day/zone combination"
+        data_tests:
+          - not_null
+      - name: demand_pct_of_total
+        description: "Percentage of all 2025 trips in this group"
+        data_tests:
+          - not_null
+
+  - name: mart_zone_kpis
+    description: >
+      Zone-level KPI table. One row per active pickup zone (262 zones).
+      Includes basic KPIs (revenue, efficiency) and three advanced operational
+      KPIs: fleet_priority_score, peak_load_factor, zone_utilization_proxy.
+    columns:
+      - name: zone_id
+        description: "Primary key — pickup zone ID"
+        data_tests:
+          - not_null
+          - unique
+      - name: total_trips
+        description: "Total trips originating in this zone in 2025"
+        data_tests:
+          - not_null
+      - name: zone_efficiency_score
+        description: "avg_revenue_per_mile × avg_revenue_per_hour / 100. Higher = more efficient zone."
+      - name: fleet_priority_score
+        description: "Composite 0–100 score: 50% volume + 30% revenue + 20% efficiency. Higher = deploy more taxis here."
+        data_tests:
+          - not_null
+      - name: peak_load_factor
+        description: "Peak hour trips ÷ avg hourly trips. Higher = more demand spikiness."
+        data_tests:
+          - not_null
+      - name: zone_utilization_proxy
+        description: "Zone trips ÷ average trips across all zones. >1 = above-average demand."
+        data_tests:
+          - not_null
+      - name: peak_hour
+        description: "Hour with the most trips for this zone (0–23)"
+        data_tests:
+          - not_null
+
+  - name: mart_revenue_efficiency
+    description: >
+      Revenue efficiency KPIs by hour, borough, month, and day type.
+      ~4,400 rows. Used for the revenue-by-hour line charts and CBD fee tracking.
+    columns:
+      - name: pickup_hour
+        description: "Hour of day (0–23)"
+        data_tests:
+          - not_null
+      - name: borough
+        description: "NYC borough"
+      - name: total_revenue
+        description: "Total revenue for this group in USD"
+        data_tests:
+          - not_null
+      - name: avg_revenue_per_trip
+        description: "Average total amount per trip"
+        data_tests:
+          - not_null
+      - name: total_cbd_fees_collected
+        description: "Sum of CBD congestion fees — 0 for outer borough trips outside the CBD zone"
+
+  - name: mart_route_analysis
+    description: >
+      Route-level analysis — one row per (pickup_zone, dropoff_zone) pair
+      with at least 100 trips. ~14,400 routes. Used for the top routes table
+      and airport route comparison.
+    columns:
+      - name: pickup_location_id
+        description: "Pickup zone ID"
+        data_tests:
+          - not_null
+      - name: dropoff_location_id
+        description: "Dropoff zone ID"
+        data_tests:
+          - not_null
+      - name: total_trips
+        description: "Number of trips on this route (minimum 100)"
+        data_tests:
+          - not_null
+      - name: is_airport_route
+        description: "TRUE if either end of the route is an airport"
+        data_tests:
+          - not_null
+      - name: avg_revenue_per_trip
+        description: "Average total amount per trip on this route"
+        data_tests:
+          - not_null

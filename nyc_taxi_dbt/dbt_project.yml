@@ -1,0 +1,28 @@
+name: 'nyc_taxi_dbt'
+version: '1.0.0'
+profile: 'nyc_taxi_dbt'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  nyc_taxi_dbt:
+    staging:
+      +materialized: view
+      # Views are lightweight — staging just cleans raw data
+      # No need to store a full copy; dbt rebuilds them on demand
+    core:
+      +materialized: table
+      # Star schema tables are stored permanently — they're the
+      # foundation everything else builds on
+    mart:
+      +materialized: table
+      # KPI tables are stored permanently — queried by the dashboard

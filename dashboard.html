@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYC Taxi Operations Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:   #378ADD;
+    --blue-l: #B5D4F4;
+    --amber:  #EF9F27;
+    --teal:   #1D9E75;
+    --coral:  #D85A30;
+    --purple: #534AB7;
+    --gray:   #6B7280;
+    --dark:   #0F1117;
+    --nav-bg: #13151F;
+    --page-bg:#F0F2F7;
+    --card:   #FFFFFF;
+    --text:   #111827;
+    --muted:  #6B7280;
+    --border: #E5E7EB;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--page-bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--nav-bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+  }
+  .sidebar-brand {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: var(--amber);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 10px;
+  }
+  .brand-title {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .brand-sub {
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .nav-section-label {
+    padding: 16px 20px 6px;
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    font-weight: 600;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+    font-size: 13px;
+    user-select: none;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: #fff;
+    background: rgba(55,138,221,0.15);
+    border-left-color: var(--blue);
+  }
+  .nav-icon {
+    width: 18px; height: 18px; opacity: 0.8; flex-shrink: 0;
+  }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--amber);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 20px;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.3);
+    font-size: 10px;
+    line-height: 1.6;
+  }
+
+  /* ── MAIN ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .page-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .page-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .topbar-filters {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    background: #fff;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--blue); color: var(--blue); }
+  .chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); display: inline-block; margin-right: 4px; }
+
+  /* ── CONTENT ── */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.blue::before  { background: var(--blue); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-card.teal::before  { background: var(--teal); }
+  .kpi-card.purple::before{ background: var(--purple); }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .kpi-sub .up   { color: var(--teal); font-weight: 600; }
+  .kpi-sub .down { color: var(--coral); font-weight: 600; }
+
+  /* ── CHART GRIDS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .col-full { margin-bottom: 20px; }
+
+  .chart-wrap { position: relative; }
+  .chart-wrap canvas { max-height: 260px; }
+  .chart-wrap-tall canvas { max-height: 340px; }
+
+  /* ── HEATMAP ── */
+  .heatmap-container {
+    overflow-x: auto;
+  }
+  .heatmap-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-size: 10px;
+  }
+  .heatmap-table th {
+    color: var(--muted);
+    font-weight: 500;
+    text-align: center;
+    padding: 2px 4px;
+    white-space: nowrap;
+  }
+  .heatmap-table td {
+    border-radius: 4px;
+    height: 22px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 500;
+    cursor: default;
+    transition: transform .1s;
+  }
+  .heatmap-table td:hover { transform: scale(1.2); z-index: 2; position: relative; }
+  .hour-label {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+    text-align: right;
+    padding-right: 8px;
+    white-space: nowrap;
+  }
+
+  /* ── ZONE TABLE ── */
+  .zone-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .zone-table th {
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .zone-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .zone-table tr:last-child td { border-bottom: none; }
+  .zone-table tr:hover td { background: #F9FAFB; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .rank-1 { background: #FEF3C7; color: #92400E; }
+  .rank-2 { background: #F3F4F6; color: #374151; }
+  .rank-3 { background: #FEF3C7; color: #92400E; }
+  .rank-n { background: #F3F4F6; color: #6B7280; }
+  .mini-bar-bg {
+    background: #F3F4F6;
+    border-radius: 4px;
+    height: 6px;
+    width: 80px;
+    display: inline-block;
+    vertical-align: middle;
+    overflow: hidden;
+  }
+  .mini-bar-fill { height: 100%; border-radius: 4px; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .tag-airport { background: #EDE9FE; color: #5B21B6; }
+  .tag-manhattan { background: #DBEAFE; color: #1E40AF; }
+  .tag-queens { background: #D1FAE5; color: #065F46; }
+  .tag-brooklyn { background: #FCE7F3; color: #9D174D; }
+  .tag-other { background: #F3F4F6; color: #374151; }
+
+  /* ── INSIGHTS ── */
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .insight-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-left: 4px solid var(--blue);
+  }
+  .insight-card.amber { border-left-color: var(--amber); }
+  .insight-card.teal  { border-left-color: var(--teal); }
+  .insight-card.coral { border-left-color: var(--coral); }
+  .insight-card.purple{ border-left-color: var(--purple); }
+  .insight-headline { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .insight-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .insight-stat { font-size: 22px; font-weight: 700; color: var(--text); margin: 8px 0 4px; }
+  .rec-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .rec-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .rec-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .rec-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .rec-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ── SCROLLBAR ── */
+  .content::-webkit-scrollbar { width: 6px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+
+  /* ── TOOLTIP ── */
+  .tooltip-custom {
+    position: fixed;
+    background: rgba(15,17,23,0.92);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+    line-height: 1.5;
+    max-width: 180px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🚕</div>
+    <div class="brand-title">NYC Taxi Intelligence</div>
+    <div class="brand-sub">2025 · 44.2M trips · TLC Data</div>
+  </div>
+
+  <div class="nav-section-label">Analytics</div>
+
+  <div class="nav-item active" onclick="showPage('overview',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" rx="1" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" rx="1" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" rx="1" stroke-width="1.5"/></svg>
+    Executive Overview
+    <span class="nav-badge">P1</span>
+  </div>
+  <div class="nav-item" onclick="showPage('demand',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Demand Analysis
+  </div>
+  <div class="nav-item" onclick="showPage('revenue',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" stroke-width="1.5" stroke-linecap="round"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Revenue Efficiency
+  </div>
+  <div class="nav-item" onclick="showPage('zones',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke-width="1.5"/><circle cx="12" cy="9" r="2.5" stroke-width="1.5"/></svg>
+    Zones &amp; Routes
+  </div>
+  <div class="nav-item" onclick="showPage('insights',this)">
+    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="1.5"/><line x1="12" y1="8" x2="12" y2="12" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2" stroke-linecap="round"/></svg>
+    Insights
+  </div>
+
+  <div class="sidebar-footer">
+    Source: TLC Open Data<br>
+    Pipeline: Python → BigQuery → dbt<br>
+    Built by Ilyass · 2025
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="topbar-title">Executive Overview</div>
+        <div class="page-subtitle"><span class="dot"></span>Jan – Dec 2025 · All boroughs · 44.2M cleaned trips</div>
+      </div>
+    </div>
+    <div class="topbar-filters">
+      <div class="chip active">All 2025</div>
+      <div class="chip" onclick="alert('Filter by borough: add this as a Tableau feature during live demo.')">Borough ▾</div>
+      <div class="chip" onclick="alert('Filter by day type: weekday / weekend.')">Day Type ▾</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ PAGE 1: OVERVIEW ══════════ -->
+    <div id="page-overview" class="page active">
+
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-label">Total Trips</div>
+          <div class="kpi-value">44.2M</div>
+          <div class="kpi-sub">Full year 2025 · cleaned</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Total Revenue</div>
+          <div class="kpi-value">$1.27B</div>
+          <div class="kpi-sub"><span class="up">↑ Peak:</span> Dec at $127M</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">Avg Revenue / Trip</div>
+          <div class="kpi-value">$28.84</div>
+          <div class="kpi-sub">JFK avg: <strong>$81.66</strong></div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">CBD Congestion Fees</div>
+          <div class="kpi-value">$24.2M</div>
+          <div class="kpi-sub">New Jan 2025 · all trips in zone</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">Monthly Trip Volume &amp; Revenue</div>
+          <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Borough Distribution</div>
+          <div class="chart-wrap"><canvas id="boroughDoughnut"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Trips by Hour of Day</div>
+          <div class="chart-wrap"><canvas id="hourlyOverview"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Weekday vs Weekend</div>
+          <div class="chart-wrap"><canvas id="wdWeChart"></canvas></div>
+        </div>
+      </div>
+
+    </div><!-- end overview -->
+
+    <!-- ══════════ PAGE 2: DEMAND ══════════ -->
+    <div id="page-demand" class="page">
+
+      <div class="col-full card">
+        <div class="card-title">Demand Heatmap — Trips by Hour &times; Day of Week</div>
+        <div class="heatmap-container" id="heatmapWrap"></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:10px;color:var(--muted);">
+          <span>Low</span>
+          <div style="display:flex;gap:2px;">
+            <div style="width:14px;height:14px;border-radius:3px;background:#EFF6FF;"></div>
+            <div style="width:14px;height:14px;border-radius:3px;background:#BFDBFE;"></div>
+            <div style="width:14px;height:14px;border-radius:3px;background:#60A5FA;"></div>
+            <div style="width:14px;height:14px;border-radius:3px;background:#2563EB;"></div>
+            <div style="width:14px;height:14px;border-radius:3px;background:#1E3A8A;"></div>
+          </div>
+          <span>High</span>
+          <span style="margin-left:auto;">Hover cells for trip count</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Trips by Day of Week</div>
+          <div class="chart-wrap"><canvas id="dowChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Monthly Trend</div>
+          <div class="chart-wrap"><canvas id="monthlyTrendDemand"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-full card">
+        <div class="card-title">Top 10 Pickup Zones by Volume</div>
+        <div class="chart-wrap-tall"><canvas id="topZonesBar"></canvas></div>
+      </div>
+
+    </div><!-- end demand -->
+
+    <!-- ══════════ PAGE 3: REVENUE ══════════ -->
+    <div id="page-revenue" class="page">
+
+      <div class="kpi-grid">
+        <div class="kpi-card amber">
+          <div class="kpi-label">Manhattan Avg / Trip</div>
+          <div class="kpi-value">$24.77</div>
+          <div class="kpi-sub">38.1M trips · 87% of volume</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-label">Queens Avg / Trip</div>
+          <div class="kpi-value">$61.68</div>
+          <div class="kpi-sub">Incl. JFK &amp; LaGuardia airports</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="kpi-label">Peak Revenue Hour</div>
+          <div class="kpi-value">5:00 AM</div>
+          <div class="kpi-sub">$53.18 avg/trip · airport runs</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-label">Total CBD Congestion</div>
+          <div class="kpi-value">$24.2M</div>
+          <div class="kpi-sub"><span class="up">↑ peak May:</span> $2.25M</div>
+        </div>
+      </div>
+
+      <div class="col-full card">
+        <div class="card-title">Avg Revenue per Trip by Hour — Weekday vs Weekend</div>
+        <div class="chart-wrap-tall"><canvas id="revHourLine"></canvas></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Monthly Revenue by Borough ($ millions)</div>
+          <div class="chart-wrap"><canvas id="stackedBoroughBar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">CBD Congestion Fees by Month ($ thousands)</div>
+          <div class="chart-wrap"><canvas id="cbdLine"></canvas></div>
+        </div>
+      </div>
+
+    </div><!-- end revenue -->
+
+    <!-- ══════════ PAGE 4: ZONES ══════════ -->
+    <div id="page-zones" class="page">
+
+      <div class="col-full card">
+        <div class="card-title">Top 10 Pickup Zones — Volume, Revenue &amp; Efficiency</div>
+        <table class="zone-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Zone</th>
+              <th>Borough</th>
+              <th>Total Trips</th>
+              <th>Avg Rev / Trip</th>
+              <th>Fleet Priority ↑</th>
+              <th>Peak Load Factor</th>
+              <th>Utilization</th>
+              <th>Efficiency</th>
+              <th>Peak Hour</th>
+            </tr>
+          </thead>
+          <tbody id="zoneTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Fleet Priority Score — Top 10 (higher = deploy more taxis here)</div>
+          <div class="chart-wrap"><canvas id="efficiencyBar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Airport Routes by Volume</div>
+          <table class="zone-table" style="font-size:11px;">
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th style="text-align:right;">Trips</th>
+                <th style="text-align:right;">Avg Rev</th>
+              </tr>
+            </thead>
+            <tbody id="routeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- end zones -->
+
+    <!-- ══════════ PAGE 5: INSIGHTS ══════════ -->
+    <div id="page-insights" class="page">
+
+      <div class="insight-grid">
+        <div class="insight-card">
+          <div class="insight-headline">🏙️ Manhattan dominates by volume, airports win on revenue</div>
+          <div class="insight-stat">87% of trips · $24.77 avg</div>
+          <div class="insight-body">Manhattan accounts for 38.1M of 44.2M trips but earns only $24.77/trip on average. Queens (4.2M trips) earns $61.68/trip due to JFK ($81.66) and LaGuardia ($69.74). A single airport run is worth 3.3× a Manhattan run.</div>
+        </div>
+        <div class="insight-card amber">
+          <div class="insight-headline">🌙 Evening rush (6 PM) is peak volume, but 5 AM earns most</div>
+          <div class="insight-stat">6 PM: 2.97M trips · 5 AM: $53.18/trip</div>
+          <div class="insight-body">Trip volume peaks at 6 PM with 2.97M trips. But 5 AM has the highest average revenue per trip ($53.18) due to airport runs before the morning rush. Drivers who shift to early mornings earn significantly more per trip.</div>
+        </div>
+        <div class="insight-card teal">
+          <div class="insight-headline">📅 August slump is structural, not random</div>
+          <div class="insight-stat">Aug: 3.18M trips — yearly low</div>
+          <div class="insight-body">August is the lowest month in 2025 (3.18M trips vs. May peak at 4.09M). This is a structural NYC pattern: affluent residents leave the city for summer. Fleet managers should expect reduced demand every August.</div>
+        </div>
+        <div class="insight-card coral">
+          <div class="insight-headline">🚦 CBD Congestion Pricing launched Jan 2025 — $24.2M collected</div>
+          <div class="insight-stat">$24.2M in congestion fees</div>
+          <div class="insight-body">NYC's Central Business District Congestion Pricing is fully live in 2025 data. Fees peak in May ($2.25M) and track monthly trip volume closely. This is a new revenue stream not present in 2024 data — a key differentiator in this dataset.</div>
+        </div>
+        <div class="insight-card purple">
+          <div class="insight-headline">📍 Upper East Side is highest-volume, but inefficient per mile</div>
+          <div class="insight-stat">1.99M trips · $21.25 avg · 1.8 mi avg</div>
+          <div class="insight-body">The Upper East Side South zone leads in trips (1.99M) but has short trips averaging 1.8 miles at $21.25/trip. In contrast, JFK has fewer trips (1.88M) but earns $81.66/trip at 4× the distance. Resource allocation should account for this trade-off.</div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-headline">💳 67% of trips are credit card — tip behavior follows</div>
+          <div class="insight-stat">67% credit card · avg tip ~$3</div>
+          <div class="insight-body">Credit card trips dominate (67%) and are strongly correlated with higher tips. Cash trips have near-zero recorded tips due to TLC data limitations. Airport credit card trips have the highest tip averages, reinforcing their revenue advantage.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Operational Recommendations</div>
+        <ul class="rec-list" style="margin-top:4px;">
+          <li class="rec-item">
+            <div class="rec-icon" style="background:#DBEAFE;">🕔</div>
+            <div>
+              <div class="rec-title">Shift fleet allocation toward 5–7 AM airport window</div>
+              <div class="rec-desc">Revenue per trip is 84% higher than the day average. JFK runs at 5 AM average $81+ vs $28 city-wide. Target outer borough drivers already near airports.</div>
+            </div>
+          </li>
+          <li class="rec-item">
+            <div class="rec-icon" style="background:#D1FAE5;">📍</div>
+            <div>
+              <div class="rec-title">Reduce idle time in Upper East Side during off-peak hours</div>
+              <div class="rec-desc">Upper East Side South has the highest trip count but peak demand concentrates in the 3–6 PM window. Off-peak, drivers would earn more repositioning to Midtown Center or Times Square.</div>
+            </div>
+          </li>
+          <li class="rec-item">
+            <div class="rec-icon" style="background:#EDE9FE;">📆</div>
+            <div>
+              <div class="rec-title">Plan reduced fleet capacity in August — structural lull</div>
+              <div class="rec-desc">August shows a predictable 22% drop from the May peak every year. Operations teams can use this window for vehicle maintenance without impacting service levels.</div>
+            </div>
+          </li>
+          <li class="rec-item">
+            <div class="rec-icon" style="background:#FEF3C7;">🚦</div>
+            <div>
+              <div class="rec-title">Monitor CBD congestion fee impact on trip demand in lower Manhattan</div>
+              <div class="rec-desc">$24.2M in CBD fees collected across 2025. The fee's behavioral impact on trip demand (shorter trips, fewer downtown pickups) should be monitored quarter-over-quarter.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+    </div><!-- end insights -->
+
+  </div><!-- end content -->
+</div><!-- end main -->
+
+<div class="tooltip-custom" id="heatTooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const HOURS  = Array.from({length:24}, (_,i) => `${i}:00`);
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const MONTHLY_TRIPS   = [3252362,3306159,3826946,3671927,4092209,3869345,3494633,3180655,3838218,3943798,3643523,4049572];
+const MONTHLY_REV     = [87.2,87.9,106.9,103.8,119.8,114.0,101.4,92.1,114.1,115.9,103.7,127.1];
+const HOURLY_TRIPS    = [1380768,907403,594737,403970,320515,344516,689344,1273803,1724170,1853609,1945363,2087605,2270707,2377674,2550494,2650493,2597146,2857779,2975377,2687815,2595244,2658425,2479737,1942653];
+const DOW_TRIPS       = [5915858,5407714,6149253,6612818,6737571,6495686,6850447];
+const WEEKDAY_REV     = [46.49,46.2,45.18,46.17,50.64,56.73,52.19,51.03,48.55,49.84,53.66,53.24,55.62,49.24,52.6,52.69,57.68,54.98,53.15,52.32,47.39,48.52,44.71,47.48];
+const WEEKEND_REV     = [44.55,38.7,36.87,42.12,46.01,49.48,50.54,46.47,43.97,46.41,45.36,50.97,51.59,49.44,50.07,49.35,48.99,48.75,47.59,50.32,46.76,49.25,47.57,50.85];
+const CBD_BY_MONTH    = [1604.7,1836.3,2133.4,2038.5,2248.8,2139.5,1949.6,1757.5,2126.9,2175.4,1990.4,2189.1];
+const STACKED = {
+  Manhattan: [66.14,67.44,79.27,77.21,86.92,81.58,72.01,63.21,82.99,84.75,76.53,95.73],
+  Queens:    [18.72,17.31,22.78,22.34,27.37,26.15,23.9,23.83,25.57,26.19,22.7,24.37],
+  Brooklyn:  [1.65,2.35,3.59,3.14,4.2,4.91,4.27,3.89,4.37,3.66,3.27,5.41],
+  Bronx:     [0.43,0.6,0.96,0.82,0.98,1.01,0.95,0.86,0.92,0.97,0.94,1.33]
+};
+const HEATMAP = [[385242,103797,89614,110711,132823,200581,358000],[307597,51706,42070,54664,64580,108989,277797],[216787,28443,21432,30852,34922,62936,199365],[152248,20949,14147,20521,23841,40896,131368],[101451,28458,19244,24148,27325,39299,80590],[52654,51049,44266,46649,51326,55736,42836],[65399,110684,110530,114876,118120,109644,60091],[85545,205451,226095,237691,233368,200213,85440],[122291,270092,308460,322653,312457,255919,132298],[187722,268155,310703,319798,308823,260735,197673],[251222,263543,296222,306858,300261,273765,253492],[291830,274616,303309,317939,312737,290611,296563],[327402,296508,323197,338180,334847,319013,331560],[345610,308015,331636,352949,349591,334466,355407],[355342,333834,364960,377149,382527,377158,359524],[345417,351471,381217,395943,403206,397244,375995],[352620,335969,368417,385414,385673,369509,399544],[361099,372304,418714,440347,439739,406292,419284],[354947,374459,437188,464236,467011,431865,445671],[307446,319823,375779,419862,424460,403139,437306],[279380,315424,394124,425727,433026,373563,374000],[267343,314438,420800,453590,452965,373416,375873],[230130,251466,343499,398703,424404,406570,424965],[169134,157060,203630,253358,319539,404127,435805]];
+
+const TOP_ZONES = [
+  {name:'Upper East Side South', borough:'Manhattan', trips:1998396, avg_rev:21.25, efficiency:31.02, peak_hr:15, fleet:56.4, load:1.87, util:11.85},
+  {name:'Midtown Center',        borough:'Manhattan', trips:1945658, avg_rev:25.97, efficiency:33.66, peak_hr:18, fleet:56.4, load:2.11, util:11.54},
+  {name:'JFK Airport',           borough:'Queens',    trips:1879610, avg_rev:81.66, efficiency:148.95,peak_hr:16, fleet:71.4, load:1.84, util:11.15},
+  {name:'Upper East Side North', borough:'Manhattan', trips:1746490, avg_rev:21.54, efficiency:30.57, peak_hr:15, fleet:50.1, load:1.99, util:10.36},
+  {name:'Penn Station/Madison',  borough:'Manhattan', trips:1443870, avg_rev:25.96, efficiency:25.95, peak_hr:17, fleet:43.9, load:1.50, util:8.56},
+  {name:'Midtown East',          borough:'Manhattan', trips:1412070, avg_rev:25.20, efficiency:32.12, peak_hr:18, fleet:42.9, load:2.14, util:8.38},
+  {name:'Times Sq/Theatre Dist', borough:'Manhattan', trips:1392662, avg_rev:29.06, efficiency:38.33, peak_hr:21, fleet:43.5, load:2.25, util:8.26},
+  {name:'Lincoln Square East',   borough:'Manhattan', trips:1286196, avg_rev:22.79, efficiency:27.92, peak_hr:21, fleet:39.0, load:2.02, util:7.63},
+  {name:'LaGuardia Airport',     borough:'Queens',    trips:1224892, avg_rev:69.74, efficiency:62.03, peak_hr:14, fleet:51.5, load:1.91, util:7.27},
+  {name:'Union Sq',              borough:'Manhattan', trips:1187752, avg_rev:23.61, efficiency:35.18, peak_hr:18, fleet:36.8, load:1.84, util:7.05},
+];
+const AIRPORT_ROUTES = [
+  {from:'JFK Airport',            to:'Outside of NYC',           trips:88522, avg_rev:126.50},
+  {from:'JFK Airport',            to:'Times Sq/Theatre District', trips:82420, avg_rev:96.01},
+  {from:'LaGuardia Airport',      to:'Times Sq/Theatre District', trips:75163, avg_rev:80.53},
+  {from:'JFK Airport',            to:'JFK Airport',              trips:53150, avg_rev:45.46},
+  {from:'LaGuardia Airport',      to:'Midtown Center',           trips:47688, avg_rev:77.20},
+  {from:'Times Sq/Theatre District',to:'LaGuardia Airport',      trips:47472, avg_rev:78.71},
+  {from:'JFK Airport',            to:'Midtown South',            trips:45264, avg_rev:97.27},
+  {from:'JFK Airport',            to:'Clinton East',             trips:41598, avg_rev:95.62},
+];
+
+// ═══════════════════════════════════════════
+// CHART DEFAULTS
+// ═══════════════════════════════════════════
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#6B7280';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15,17,23,0.9)';
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.titleFont = {size:12,weight:'600'};
+Chart.defaults.plugins.tooltip.bodyFont = {size:11};
+Chart.defaults.animation.duration = 600;
+
+function fmt(n) { return n.toLocaleString('en-US'); }
+function fmtM(n) { return (n/1e6).toFixed(1)+'M'; }
+
+// ═══════════════════════════════════════════
+// CHART INIT
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  buildHeatmap();
+  buildZoneTable();
+  buildRouteTable();
+  initCharts();
+});
+
+function initCharts() {
+  // ── Monthly bar + line ──
+  new Chart(document.getElementById('monthlyChart'), {
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { type:'bar', label:'Trips', data: MONTHLY_TRIPS, backgroundColor: '#378ADD22', borderColor:'#378ADD', borderWidth:1.5, yAxisID:'y', borderRadius:4 },
+        { type:'line', label:'Revenue ($M)', data: MONTHLY_REV, borderColor:'#EF9F27', backgroundColor:'transparent', borderWidth:2, pointRadius:3, pointBackgroundColor:'#EF9F27', yAxisID:'y2', tension:0.35 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{position:'top'}, tooltip:{mode:'index',intersect:false} },
+      scales:{
+        y:{ position:'left', ticks:{callback:v=>fmtM(v)}, grid:{color:'#F3F4F6'} },
+        y2:{ position:'right', ticks:{callback:v=>'$'+v+'M'}, grid:{display:false} }
+      }
+    }
+  });
+
+  // ── Borough doughnut ──
+  new Chart(document.getElementById('boroughDoughnut'), {
+    type:'doughnut',
+    data:{
+      labels:['Manhattan','Queens','Brooklyn','Bronx','Other'],
+      datasets:[{
+        data:[38097092,4171373,1472374,339533,79903],
+        backgroundColor:['#378ADD','#EF9F27','#1D9E75','#534AB7','#9CA3AF'],
+        borderWidth:2, borderColor:'#fff', hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true, cutout:'65%',
+      plugins:{
+        legend:{position:'right'},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtM(ctx.parsed)} trips`}}
+      }
+    }
+  });
+
+  // ── Hourly bar ──
+  new Chart(document.getElementById('hourlyOverview'), {
+    type:'bar',
+    data:{
+      labels: HOURS,
+      datasets:[{ label:'Trips', data:HOURLY_TRIPS, backgroundColor: HOURLY_TRIPS.map((_,i)=>i===18?'#EF9F27':'#378ADD44'), borderColor: HOURLY_TRIPS.map((_,i)=>i===18?'#EF9F27':'#378ADD'), borderWidth:1, borderRadius:3 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${fmt(ctx.parsed.y)} trips`}} },
+      scales:{ y:{ticks:{callback:v=>fmtM(v)}, grid:{color:'#F3F4F6'}}, x:{grid:{display:false}} }
+    }
+  });
+
+  // ── Weekday vs Weekend ──
+  new Chart(document.getElementById('wdWeChart'), {
+    type:'doughnut',
+    data:{
+      labels:['Weekday (71%)','Weekend (29%)'],
+      datasets:[{
+        data:[31403042,12766305],
+        backgroundColor:['#378ADD','#93C5FD'],
+        borderWidth:2, borderColor:'#fff', hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true, cutout:'60%',
+      plugins:{
+        legend:{position:'bottom'},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtM(ctx.parsed)} trips`}}
+      }
+    }
+  });
+
+  // ── DOW bar ──
+  const dowColors = ['#60A5FA','#378ADD','#378ADD','#378ADD','#378ADD','#378ADD','#1D4ED8'];
+  new Chart(document.getElementById('dowChart'), {
+    type:'bar',
+    data:{
+      labels:DAYS,
+      datasets:[{label:'Trips', data:DOW_TRIPS, backgroundColor:dowColors, borderRadius:4}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${fmtM(ctx.parsed.y)} trips`}}},
+      scales:{y:{ticks:{callback:v=>fmtM(v)}, grid:{color:'#F3F4F6'}}, x:{grid:{display:false}}}
+    }
+  });
+
+  // ── Monthly trend (demand page) ──
+  new Chart(document.getElementById('monthlyTrendDemand'), {
+    type:'line',
+    data:{
+      labels:MONTHS,
+      datasets:[{
+        label:'Trips', data:MONTHLY_TRIPS, borderColor:'#378ADD', backgroundColor:'#378ADD18',
+        fill:true, tension:0.4, pointRadius:4, pointBackgroundColor:'#378ADD', borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${fmtM(ctx.parsed.y)} trips`}}},
+      scales:{y:{ticks:{callback:v=>fmtM(v)}, grid:{color:'#F3F4F6'}}, x:{grid:{display:false}}}
+    }
+  });
+
+  // ── Top Zones horizontal bar ──
+  new Chart(document.getElementById('topZonesBar'), {
+    type:'bar',
+    data:{
+      labels: TOP_ZONES.map(z=>z.name),
+      datasets:[
+        { label:'Trips', data:TOP_ZONES.map(z=>z.trips), backgroundColor:TOP_ZONES.map(z=>z.borough==='Queens'?'#EF9F27':'#378ADD'), borderRadius:4 }
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        label: ctx => `${fmtM(ctx.parsed.x)} trips · $${TOP_ZONES[ctx.dataIndex].avg_rev}/trip`
+      }}},
+      scales:{x:{ticks:{callback:v=>fmtM(v)}, grid:{color:'#F3F4F6'}}, y:{grid:{display:false}, ticks:{font:{size:11}}}}
+    }
+  });
+
+  // ── Revenue per hour line ──
+  new Chart(document.getElementById('revHourLine'), {
+    type:'line',
+    data:{
+      labels: HOURS,
+      datasets:[
+        { label:'Weekday', data:WEEKDAY_REV, borderColor:'#378ADD', backgroundColor:'transparent', borderWidth:2.5, pointRadius:2, tension:0.4 },
+        { label:'Weekend', data:WEEKEND_REV, borderColor:'#EF9F27', backgroundColor:'transparent', borderWidth:2.5, pointRadius:2, tension:0.4, borderDash:[5,3] }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top'}, tooltip:{mode:'index', intersect:false, callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}/trip`}}},
+      scales:{y:{ticks:{callback:v=>'$'+v}, grid:{color:'#F3F4F6'}, min:30}, x:{grid:{display:false}}}
+    }
+  });
+
+  // ── Stacked borough bar ──
+  new Chart(document.getElementById('stackedBoroughBar'), {
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        { label:'Manhattan', data:STACKED.Manhattan, backgroundColor:'#378ADD', stack:'s', borderRadius:0 },
+        { label:'Queens',    data:STACKED.Queens,    backgroundColor:'#EF9F27', stack:'s', borderRadius:0 },
+        { label:'Brooklyn',  data:STACKED.Brooklyn,  backgroundColor:'#1D9E75', stack:'s', borderRadius:0 },
+        { label:'Bronx',     data:STACKED.Bronx,     backgroundColor:'#534AB7', stack:'s', borderRadius:0 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{position:'top'}, tooltip:{mode:'index', intersect:false, callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y}M`}} },
+      scales:{ x:{stacked:true, grid:{display:false}}, y:{stacked:true, ticks:{callback:v=>'$'+v+'M'}, grid:{color:'#F3F4F6'}} }
+    }
+  });
+
+  // ── CBD line ──
+  new Chart(document.getElementById('cbdLine'), {
+    type:'line',
+    data:{
+      labels:MONTHS,
+      datasets:[{
+        label:'CBD Fees ($K)', data:CBD_BY_MONTH, borderColor:'#534AB7', backgroundColor:'#534AB718',
+        fill:true, tension:0.4, pointRadius:4, pointBackgroundColor:'#534AB7', borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`$${ctx.parsed.y.toFixed(0)}K`}}},
+      scales:{y:{ticks:{callback:v=>'$'+v+'K'}, grid:{color:'#F3F4F6'}}, x:{grid:{display:false}}}
+    }
+  });
+
+  // ── Efficiency bar ──
+  new Chart(document.getElementById('efficiencyBar'), {
+    type:'bar',
+    data:{
+      labels: TOP_ZONES.map(z=>z.name.length>20?z.name.slice(0,18)+'…':z.name),
+      datasets:[{
+        label:'Fleet Priority Score (0–100)',
+        data: TOP_ZONES.map(z=>z.fleet),
+        backgroundColor: TOP_ZONES.map(z=>z.borough==='Queens'?'#EF9F27':'#378ADD99'),
+        borderColor:     TOP_ZONES.map(z=>z.borough==='Queens'?'#EF9F27':'#378ADD'),
+        borderWidth:1.5, borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>{
+        const z = TOP_ZONES[ctx.dataIndex];
+        return [`Priority: ${z.fleet}/100`, `Load factor: ${z.load}×`, `Utilization: ${z.util}× avg`];
+      }}}},
+      scales:{x:{max:100, grid:{color:'#F3F4F6'}, ticks:{callback:v=>v+'/100'}}, y:{grid:{display:false}, ticks:{font:{size:10}}}}
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// HEATMAP
+// ═══════════════════════════════════════════
+function heatColor(val, min, max) {
+  const pct = (val - min) / (max - min);
+  const stops = ['#EFF6FF','#BFDBFE','#93C5FD','#60A5FA','#2563EB','#1E40AF','#1E3A8A'];
+  const idx = Math.min(Math.floor(pct * (stops.length-1)), stops.length-2);
+  return stops[Math.round(pct * (stops.length-1))];
+}
+
+function buildHeatmap() {
+  const all = HEATMAP.flat();
+  const min = Math.min(...all), max = Math.max(...all);
+  const tooltip = document.getElementById('heatTooltip');
+
+  let html = '<table class="heatmap-table"><thead><tr><th style="width:40px"></th>';
+  DAYS.forEach(d => html += `<th>${d}</th>`);
+  html += '</tr></thead><tbody>';
+
+  for (let h = 0; h < 24; h++) {
+    const label = h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h-12}pm`;
+    html += `<tr><td class="hour-label">${label}</td>`;
+    for (let d = 0; d < 7; d++) {
+      const v = HEATMAP[h][d];
+      const bg = heatColor(v, min, max);
+      html += `<td style="background:${bg};" data-v="${v}" data-h="${h}" data-d="${d}"></td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('heatmapWrap').innerHTML = html;
+
+  document.getElementById('heatmapWrap').addEventListener('mousemove', e => {
+    const td = e.target.closest('td[data-v]');
+    if (!td) { tooltip.style.display='none'; return; }
+    const v = parseInt(td.dataset.v), h = parseInt(td.dataset.h), d = parseInt(td.dataset.d);
+    const hLabel = h===0?'12:00 AM': h<12?`${h}:00 AM`: h===12?'12:00 PM':`${h-12}:00 PM`;
+    tooltip.innerHTML = `<strong>${DAYS[d]} ${hLabel}</strong><br>${fmt(v)} trips`;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top  = (e.clientY - 8)  + 'px';
+  });
+  document.getElementById('heatmapWrap').addEventListener('mouseleave', ()=>{ tooltip.style.display='none'; });
+}
+
+// ═══════════════════════════════════════════
+// TABLES
+// ═══════════════════════════════════════════
+function boroughTag(b) {
+  const cls = {Manhattan:'tag-manhattan',Queens:'tag-queens',Brooklyn:'tag-brooklyn'}[b]||'tag-other';
+  return `<span class="tag ${cls}">${b}</span>`;
+}
+
+function buildZoneTable() {
+  const maxTrips  = TOP_ZONES[0].trips;
+  const maxFleet  = Math.max(...TOP_ZONES.map(z=>z.fleet));
+  const maxEff    = Math.max(...TOP_ZONES.map(z=>z.efficiency));
+  const maxLoad   = Math.max(...TOP_ZONES.map(z=>z.load));
+  const maxUtil   = Math.max(...TOP_ZONES.map(z=>z.util));
+  let html = '';
+  TOP_ZONES.forEach((z,i) => {
+    const rankCls = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    const airport = (z.borough==='Queens'&&(z.name.includes('JFK')||z.name.includes('LaGuardia')))?'<span class="tag tag-airport">✈</span>':'';
+    const loadColor = z.load >= 2.0 ? '#D85A30' : z.load >= 1.7 ? '#EF9F27' : '#1D9E75';
+    html += `<tr>
+      <td><span class="rank-badge ${rankCls}">${i+1}</span></td>
+      <td><strong style="font-size:12px">${z.name}</strong> ${airport}</td>
+      <td>${boroughTag(z.borough)}</td>
+      <td>${fmtM(z.trips)}</td>
+      <td><strong style="color:${z.avg_rev>50?'#D85A30':'#111'}">$${z.avg_rev.toFixed(2)}</strong></td>
+      <td>
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${z.fleet/maxFleet*100}%;background:#EF9F27"></div></div>
+        <span style="font-size:10px;font-weight:600;margin-left:4px">${z.fleet}</span>
+      </td>
+      <td style="color:${loadColor};font-weight:600;font-size:11px">${z.load}×</td>
+      <td>
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${z.util/maxUtil*100}%;background:#534AB7"></div></div>
+        <span style="font-size:10px;color:var(--muted);margin-left:4px">${z.util}×</span>
+      </td>
+      <td>
+        <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${z.efficiency/maxEff*100}%;background:#378ADD"></div></div>
+        <span style="font-size:10px;color:var(--muted);margin-left:4px">${z.efficiency}</span>
+      </td>
+      <td style="color:var(--muted);font-size:11px">${z.peak_hr}:00</td>
+    </tr>`;
+  });
+  document.getElementById('zoneTableBody').innerHTML = html;
+}
+
+function buildRouteTable() {
+  let html = '';
+  AIRPORT_ROUTES.forEach(r => {
+    html += `<tr>
+      <td><div style="font-size:11px;font-weight:600">${r.from}</div><div style="font-size:10px;color:var(--muted)">→ ${r.to}</div></td>
+      <td style="text-align:right;font-weight:600">${fmtM(r.trips)}</td>
+      <td style="text-align:right;color:var(--coral);font-weight:700">$${r.avg_rev.toFixed(0)}</td>
+    </tr>`;
+  });
+  document.getElementById('routeTableBody').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const PAGE_TITLES = {
+  overview: 'Executive Overview',
+  demand:   'Demand Analysis',
+  revenue:  'Revenue Efficiency',
+  zones:    'Zones & Routes',
+  insights: 'Insights & Recommendations'
+};
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  navEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[id];
+  document.querySelector('.content').scrollTop = 0;
+}
+</script>
+</body>
+</html>

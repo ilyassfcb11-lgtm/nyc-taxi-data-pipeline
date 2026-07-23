@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: dim_zone
+    description: "Zone dimension table. One row per NYC taxi zone. Adds is_airport flag."
+    columns:
+      - name: location_id
+        description: "Primary key — unique zone ID (1–265)"
+        data_tests:
+          - not_null
+          - unique
+      - name: zone_name
+        description: "Human-readable zone name"
+        data_tests:
+          - not_null
+      - name: borough
+        description: "NYC borough"
+        data_tests:
+          - not_null
+      - name: is_airport
+        description: "TRUE for JFK (132) and LaGuardia (138)"
+        data_tests:
+          - not_null
+
+  - name: dim_date
+    description: "Date dimension. One row per calendar date in 2025 (365 rows). Pre-computes all date attributes."
+    columns:
+      - name: date_id
+        description: "Primary key — calendar date"
+        data_tests:
+          - not_null
+          - unique
+      - name: month_name
+        description: "Full month name (January, February, ...)"
+        data_tests:
+          - not_null
+      - name: day_type
+        description: "Weekday or Weekend"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Weekday', 'Weekend']
+      - name: quarter
+        description: "Quarter number (1–4)"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+
+  - name: fact_trips
+    description: >
+      Central fact table — one row per cleaned NYC taxi trip (~44M rows).
+      Partitioned by pickup_date for cost-efficient BigQuery queries.
+      Contains foreign keys to dim_zone and dim_date, plus pre-computed
+      revenue metrics (revenue_per_mile, revenue_per_hour) used by all mart tables.
+    columns:
+      - name: pickup_location_id
+        description: "FK to dim_zone.location_id"
+        data_tests:
+          - not_null
+      - name: dropoff_location_id
+        description: "FK to dim_zone.location_id"
+        data_tests:
+          - not_null
+      - name: pickup_date
+        description: "FK to dim_date.date_id — also the partition key"
+        data_tests:
+          - not_null
+      - name: total_amount
+        description: "Total revenue for this trip in USD"
+        data_tests:
+          - not_null
+      - name: fare_amount
+        description: "Metered fare component only"
+        data_tests:
+          - not_null
+      - name: revenue_per_mile
+        description: "total_amount / trip_distance_miles — NULL if distance = 0"
+      - name: revenue_per_hour
+        description: "total_amount / duration_minutes * 60 — NULL if duration = 0"
+      - name: trip_distance_miles
+        description: "Trip distance in miles"
+        data_tests:
+          - not_null
+      - name: is_airport_pickup
+        description: "TRUE if pickup is JFK or LaGuardia"
+        data_tests:
+          - not_null
+      - name: is_credit_card
+        description: "TRUE if payment by credit card"
+        data_tests:
+          - not_null
+      - name: is_weekend
+        description: "TRUE if Saturday or Sunday"
+        data_tests:
+          - not_null
