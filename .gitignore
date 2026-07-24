@@ -88,6 +88,19 @@ tableau_data/
 logs/
 *.log
 
+# --- Internal planning docs ---
+MILESTONES.md
+ROADMAP.md
+PROJECT_BRIEF.md
+SETUP_GUIDE.md
+ARCHITECTURE.md
+
+# --- Empty placeholder folders ---
+dbt_project/
+analysis/
+dashboards/
+*.gitkeep
+
 
 # --- IDE and editor files ---
 .vscode/
