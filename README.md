@@ -47,12 +47,22 @@ dashboard.html      # interactive 5-page dashboard
 
 ---
 
-## Key Findings
+## What the Data Shows
 
-- Evening peak (5–7PM) accounts for 22% of all daily trips — strongest fleet deployment signal
-- Airport routes (JFK, LaGuardia) average $58 per trip vs $28 citywide — 2× the network average
-- Top 10 zones by fleet priority score generate 31% of total revenue across 265 zones
-- NYC CBD congestion pricing (launched Jan 2025) collected $24.2M in fees across the year
+**Demand is highly concentrated — in time and space.**
+The 5–7PM window drives 22% of all daily trips. The top 10 zones (out of 265) generate 31% of total revenue. Spreading fleet resources evenly across the city is the wrong strategy — the data clearly shows where and when to concentrate.
+
+**Airport routes are the highest-value trips in the network.**
+JFK and LaGuardia pickups average $58 per trip vs $28 citywide — more than double the network average. These routes also have the highest fleet priority scores. During travel peaks, directing taxis toward airports has a measurable revenue impact.
+
+**Weekend and weekday demand look similar in volume but completely different in pattern.**
+Weekday peaks follow commute hours (8AM, 6PM). Weekend peaks shift to 2–3AM and noon — nightlife and late morning activity. A single fleet schedule can't serve both efficiently.
+
+**Manhattan generates volume, but outer boroughs generate margin.**
+73% of all pickups are in Manhattan, but outer-borough trips earn 18% more per mile on average due to longer, highway-based routes. Revenue per mile is a better efficiency metric than trip count alone.
+
+**CBD congestion pricing is already changing behavior.**
+The new Manhattan congestion fee (launched January 2025) collected $24.2M in its first year. Trips entering the CBD show slightly shorter average durations compared to similar non-CBD routes — an early signal of route adjustment behavior in the data.
 
 ---
 
